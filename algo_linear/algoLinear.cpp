@@ -1,6 +1,7 @@
 #include "algoLinear.h"
 
 #include <common/base.h>
+#include <chess/board.h>
 
 #include <iostream>
 #include <vector>
@@ -45,8 +46,7 @@ namespace space {
 		auto best = *std::max_element(allScores.begin(), allScores.end(), cmp);
 
 		Move bestMove = best.first;
-		std::cout << "Move-> " << Fen::moveStr(board, bestMove) << " by AlgoLinearDepthOne" << std::endl;
-
+		
 		return bestMove;
 
 	}
@@ -121,7 +121,11 @@ namespace space {
 	AlgoLinearDepthTwoExt::ScorePair AlgoLinearDepthTwoExt::findBestLinearMove(IBoard::Ptr board)
 	{
 		std::vector<ScoreTriple> allScores = this->getAllScores(board);
-		int direction = board->whoPlaysNext() == Color::White ? 1 : -1;
+		int direction = colorToSign(board->whoPlaysNext());;
+
+		if (allScores.size() == 0) {
+			return std::make_pair(Move(), AlgoLinearDepthTwoExt::scoreMax * direction * -1.0 );
+		}
 
 		auto cmp = [direction](const ScoreTriple& a, const ScoreTriple& b) {
 			return direction * (std::get<2>(a) - std::get<2>(b)) < 0;
@@ -144,7 +148,7 @@ namespace space {
 			return Move();
 		}
 
-		int direction = board->whoPlaysNext() == Color::White ? 1 : -1;
+		int direction = colorToSign(board->whoPlaysNext());
 
 		auto cmp = [direction](const ScoreTriple& a, const ScoreTriple& b) {
 			return direction * (std::get<2>(a) - std::get<2>(b)) > 0;
@@ -166,16 +170,10 @@ namespace space {
 
 		auto best = *std::max_element(allScores2.begin(), allScores2.end(), cmp2);
 
-		Move bestMove = best.first;
-		std::cout << "Move-> " << Fen::moveStr(board, bestMove) << " by AlgoLinearDepthTwoExt" << std::endl;
+		Move bestMove = best.first;		
 
 		return bestMove;
 
 	}
-
-	
-
-
-
 
 }

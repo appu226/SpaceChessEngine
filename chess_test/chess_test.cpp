@@ -1,11 +1,14 @@
 #include "test_positions.h"
 
 #include <gtest/gtest.h>
+#include <common/base.h>
 #include <chess/board.h>
 #include <chess/board_impl.h>
 #include <chess/fen.h>
 #include <chess/pgn.h>
 #include <algo_linear/algoLinear.h>
+#include <algo_linear/algoGeneric.h>
+
 #include <fstream>
 #include <filesystem>
 #include <algo_linear/algo_dumbo.h>
@@ -22,14 +25,14 @@ namespace test_utils {
 			move = "O-O-O";
 		}
 		else {
-			move = (ply.piece.pieceType == space::PieceType::Pawn) ? move : (move + ply.piece.as_char());
+			move = (ply.piece.pieceType == space::PieceType::Pawn) ? move : (move + ply.piece.as_char(false));
 			move = move + ply.disambiguation;
 			move = move + (ply.is_capture ? "x" : "");
 			move = move + (char)('a' + ply.destination.file);
 			move = move + (char)('1' + ply.destination.rank);
 		}
 		if (ply.is_promotion) {
-			move = (move + "=") + ply.promotion_piece.as_char();
+			move = (move + "=") + ply.promotion_piece.as_char(false);
 		}
 		if (ply.is_checkmate) {
 			move = move + "#";
@@ -81,7 +84,6 @@ TEST(BoardSuite, StartingBoardTest) {
 
 TEST(BoardSuite, BoardBasicsTest) {
 	using namespace space;
-	ASSERT_EQ(2 + 2, 5 - 1);
 	IBoard::Ptr startingBoard = BoardImpl::getStartingBoard();
 	auto aa = startingBoard->getPiece({ 0,4 });
 	ASSERT_EQ(aa.has_value(), true);
@@ -254,25 +256,34 @@ TEST(AlgoSuite, AlgoLinearTest) {
 	std::vector<double> wts01 = {1, 5, 4, 4, 10};
 	using namespace space;
 
-	Fen boardfen = Fen("8/8/2kq1r2/8/2KBNR2/8/8/8 b - - 0 0");
+	//Fen boardfen = Fen("8/8/2kq1r2/8/2KBNR2/8/8/8 b - - 0 0");
+	Fen boardfen = Fen("1n1qk1nr/8/8/4NP2/3P4/1pP3Pp/rB5P/3Q1RKB w - - 0 0");
 	auto b0 = BoardImpl::fromFen(boardfen);
 
-	//auto aa = AlgoLinearDepthOne(wts01);
 	auto aa = AlgoLinearDepthTwoExt(5, wts01);
 
 	Move m0 = aa.getNextMove(b0);
-
 	auto b1 = b0->updateBoard(m0);
-
 	ASSERT_TRUE(b1.has_value());
 
 	Move m1 = aa.getNextMove(b1.value());
-
 	auto b2 = b1.value()->updateBoard(m1);
-
 	ASSERT_TRUE(b2.has_value());
+}
 
 
+TEST(AlgoSuite, AlgoGenericTest) {
+	using namespace space;
+
+	Fen boardfen = Fen("1n1qk1nr/8/8/4NP2/3P4/1pP3Pp/rB5P/3Q1RKB w - - 0 0");
+	// Fen boardfen = Fen("8/8/q4k2/2n5/8/8/8/bK6 w - - 0 0");
+
+	// BoardImpl::initializeCounter();
+
+	auto b0 = BoardImpl::fromFen(boardfen);
+	auto aa = Algo442();
+
+	Move m0 = aa.getNextMove(b0);
 }
 
 TEST(BoardSuite, PGNParseTest) {

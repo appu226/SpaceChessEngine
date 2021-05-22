@@ -10,93 +10,7 @@
 
 namespace {
 
-	space::PieceType toPieceType(char c)
-	{
-		using namespace space;
-		// Pawn, Rook, Knight, Bishop, Queen, King, None
-		switch (c)
-		{
-		case 'p':
-		case 'P':
-			return PieceType::Pawn;
-		case 'r':
-		case 'R':
-			return PieceType::Rook;
-		case 'n':
-		case 'N':
-			return PieceType::Knight;
-		case 'b':
-		case 'B':
-			return PieceType::Bishop;
-		case 'q':
-		case 'Q':
-			return PieceType::Queen;
-		case 'k':
-		case 'K':
-			return PieceType::King;
-		default:
-			throw std::runtime_error(std::string("Unrecognizable piece type '") + c + "'");
-		}
-	}
-
-	std::string piece_to_unicode(const space::Piece& piece) {
-		using namespace space;
-		if (piece.color == Color::White) {
-			switch (piece.pieceType) {
-				case PieceType::King: return "\u2654";
-				case PieceType::Queen: return "\u2655";
-				case PieceType::Rook: return "\u2656";
-				case PieceType::Bishop: return "\u2657";
-				case PieceType::Knight: return "\u2658";
-				case PieceType::Pawn: return "\u2659";
-			}
-		}
-		else {
-			switch (piece.pieceType) {
-				case PieceType::King: return "\u265a";
-				case PieceType::Queen: return "\u265b";
-				case PieceType::Rook: return "\u265c";
-				case PieceType::Bishop: return "\u265d";
-				case PieceType::Knight: return "\u265e";
-				case PieceType::Pawn: return "\u265f";
-			}
-		}
-
-		// PieceType::None
-		return " ";
-	}
-
-	inline char pieceTypeToChar(space::PieceType pieceType)
-	{
-		switch (pieceType)
-		{
-		case space::PieceType::Pawn:
-			return 'p';
-		case space::PieceType::Rook:
-			return 'r';
-		case space::PieceType::Knight:
-			return 'n';
-		case space::PieceType::Bishop:
-			return 'b';
-		case space::PieceType::Queen:
-			return 'q';
-		case space::PieceType::King:
-			return 'k';
-		case space::PieceType::None:
-			throw std::runtime_error("Cannot convert piece type 'None' to text");
-		default:
-			throw std::runtime_error("pieceType " + std::to_string(static_cast<int>(pieceType)) + " not recognized.");
-		}
-	}
-
-	char pieceToChar(space::Piece piece) {
-
-		char result = pieceTypeToChar(piece.pieceType);
-		if (piece.color == space::Color::White)
-			result = result + 'A' - 'a';
-		return result;
-	}
-
+	
 	std::string board_as_plain_string(
 		const space::IBoard& board,
 		bool unicode_pieces,
@@ -113,11 +27,11 @@ namespace {
 				auto piece = board.getPiece({ rank, file });
 				if (piece.has_value()) {
 					if (unicode_pieces) {
-						out << piece_to_unicode(piece.value()) << "  ";
+						out << piece.value().as_unicode() << "  ";
 					}
 					else {
 						auto c = piece.value().pieceType != space::PieceType::None
-						    ? pieceToChar(piece.value())
+						    ? piece.value().as_char()
 							: ' ';
 						out << c << "  ";
 					}
@@ -137,36 +51,7 @@ namespace {
 } // end anonymous namespace
 
 
-
 namespace space {
-
-	// STRUCT Move
-
-	bool Move::operator<(Move const& that) const
-	{
-		int diff =  this->sourceRank - that.sourceRank;
-
-		if (diff == 0) {
-			diff = this->sourceFile - that.sourceFile;
-			if (diff == 0) {
-				diff = this->destinationRank - that.destinationRank;
-				if (diff == 0) {
-					diff = this->destinationFile - that.destinationFile;
-					if (diff == 0) {
-						diff = static_cast<int>(this->promotedPiece) - static_cast<int>(that.promotedPiece);
-					}
-				}
-			}
-		}
-
-		if (diff < 0) {
-			return true;
-		}
-		return false;
-		
-
-	}
-
 
 	// CLASS BoardImpl
 
@@ -178,7 +63,7 @@ namespace space {
 	Color BoardImpl::getColor(bool current) const{
 		return (current == (this->m_whoPlaysNext == Color::White) ? Color::White : Color::Black);
 	}
-
+	
 	std::optional<Piece> BoardImpl::getPiece(Position position) const
 	{
 		if (m_pieces[position.rank][position.file].pieceType == PieceType::None)
@@ -222,6 +107,18 @@ namespace space {
 	}
 	
 
+	Position space::BoardImpl::getKingPosition(Color color) const
+	{
+
+		for (int i = 0; i < 8; i++) {
+			for (int j = 0; j < 8; j++) {
+				Piece p = this->m_pieces[i][j];
+				if (p.color == color && p.pieceType == PieceType::King) {
+					return Position(i, j);
+				}
+			}
+		}
+	}
 
 
 	bool BoardImpl::isStaleMate() const
@@ -231,7 +128,6 @@ namespace space {
 			return allMoves.size() == 0;
 		}
 		return false;
-
 	}
 
 	bool BoardImpl::isCheckMate() const
@@ -481,21 +377,10 @@ namespace space {
 			for (int file = 0; file < 8; ++file)
 			{
 				ss.get(c);
-				if (c >= 'a' && c <= 'z')
+				if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
 				{
-					// black piece
-					Piece piece;
-					piece.color = Color::Black;
-					piece.pieceType = toPieceType(c);
-					board->m_pieces[rank][file] = piece;
-				}
-				else if (c >= 'A' && c <= 'Z')
-				{
-					// white piece
-					Piece piece;
-					piece.color = Color::White;
-					piece.pieceType = toPieceType(c);
-					board->m_pieces[rank][file] = piece;
+					// piece
+					board->m_pieces[rank][file] = Piece(c);
 				}
 				else if (c >= '1' && c <= '8')
 				{
@@ -660,24 +545,13 @@ namespace space {
 	// if position specified, examines for king moving to that cell (useful in castling checks)
 	bool BoardImpl::isUnderCheck(Color color, std::optional<Position> targetKingPosition) const
 	{
-		int rank, file;
-		if (targetKingPosition.has_value()) {
-			rank = targetKingPosition.value().rank;
-			file = targetKingPosition.value().file;
-		}
-		else {
-			for (int i = 0; i < 8; i++) {
-				for (int j = 0; j < 8; j++) {
-					Piece p = this->m_pieces[i][j];
-					if (p.color == color && p.pieceType == PieceType::King) {
-						rank = i;
-						file = j;
-					}
-				}
-			}
-		}
+		Position base_position = targetKingPosition.has_value() ?
+			targetKingPosition.value() 
+			: getKingPosition(color);
+
 		Color oppColor = color == Color::Black ? Color::White : Color::Black;
-		auto base_position = Position(rank, file);
+		int rank = base_position.rank;
+		int file = base_position.file;
 
 		for (auto& direction: internals::MoveOffsets::orthogonal_offsets) {
 			auto piece = internals::Utils::get_first_piece(this, base_position, direction);
@@ -720,6 +594,99 @@ namespace space {
 			}
 		}
 		return false;
+	}
+
+	//TODO
+	// checks if all in-between cells for a move are empty
+	bool BoardImpl::checkPathEmpty(Move m) const
+	{
+		bool diag = (m.destinationFile != m.sourceFile) && (m.destinationRank != m.sourceRank);
+
+
+		int deltax = m.destinationRank - m.sourceRank;
+		int deltay = m.destinationFile - m.sourceFile;
+		int delta = std::max(abs(deltax), abs(deltay));
+		int sgnx = deltax > 0 ? 1 : (deltax < 0 ? -1 : 0);
+		int sgny = deltay > 0 ? 1 : (deltay < 0 ? -1 : 0);
+
+		for (int j = 1; j < delta; j++)
+		{
+			int rank = m.sourceRank + j * sgnx;
+			int file = m.sourceFile + j * sgny;
+			if (this->m_pieces[rank][file].pieceType != PieceType::None)
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+
+
+
+	// TODO: check if a move is possible 
+	// ignoring : 
+	//		who plays next 
+	//		checkmate
+	//		zero move
+	//		castling
+	bool BoardImpl::canMove(Move m) const
+	{
+		Piece pSource = this->m_pieces[m.sourceRank][m.sourceFile];
+		Piece pTarget = this->m_pieces[m.destinationRank][m.destinationFile];
+
+		// moving to same color
+		if ((pTarget.pieceType != PieceType::None)&&
+			pTarget.color == pSource.color)
+			return false;
+
+		switch (pSource.pieceType)
+		{
+		case PieceType::None:
+			return false;
+
+		case PieceType::Pawn:
+		{
+			int direction = colorToSign(pSource.color);
+			return ((m.destinationFile == m.sourceFile) &&
+				(m.destinationRank == m.sourceRank + direction) &&
+				(pTarget.pieceType == PieceType::None))
+
+				|| ((abs(m.destinationFile - m.sourceFile) == 1) &&
+					(m.destinationRank == m.sourceRank + direction) &&
+					(pTarget.color != pSource.color));
+		}
+
+		case PieceType::Bishop:
+			return (abs(m.destinationFile - m.sourceFile) ==  abs(m.destinationRank - m.sourceRank)) 
+				&& checkPathEmpty(m);
+
+		case PieceType::Knight:
+		{
+			auto f = [](int a, int b) {
+				return (a == 1 && b == 2) || (a == 2 && b == 1); };
+			return f(abs(m.destinationFile - m.sourceFile),
+				abs(m.destinationRank - m.sourceRank));
+		}
+
+		case PieceType::Rook:
+			return ((m.destinationFile == m.sourceFile) ||
+					(m.destinationRank == m.sourceRank)) &&
+				checkPathEmpty(m);
+
+		case PieceType::Queen:
+			return ((m.destinationFile == m.sourceFile) ||
+					(m.destinationRank == m.sourceRank) ||
+					abs(m.destinationFile - m.sourceFile) == 
+								abs(m.destinationRank - m.sourceRank)
+					) &&
+				checkPathEmpty(m);
+
+		case PieceType::King:
+			return	abs(m.destinationFile - m.sourceFile) <= 1 &&
+				abs(m.destinationRank - m.sourceRank) <= 1;			
+		}
+
 	}
 
 	std::vector<Move> BoardImpl::getAllMoves(Color color) const
@@ -887,17 +854,6 @@ namespace space {
 		return moves;
 	}
 
-	char Piece::as_char() const {
-		switch (pieceType) {
-			case PieceType::Rook  : return 'R';
-			case PieceType::Knight: return 'N';
-			case PieceType::Bishop: return 'B';
-			case PieceType::King  : return 'K';
-			case PieceType::Queen : return 'Q';
-			case PieceType::Pawn  : return 'P';
-			default               : return '-';
-		}
-	}
 
 	std::string BoardImpl::as_string(
 			bool terminal_colors,
@@ -910,7 +866,7 @@ namespace space {
 		int stop = perspective == Color::White ? -1 : 8;
 		int step = start > stop ? -1 : 1;
 
-		auto white_square = terminal_colors ? "\u001b[47m" : "";
+		auto white_square = terminal_colors ? "\u001b[46m" : "";
 		auto black_square = terminal_colors ? "\u001b[45m" : "";
 		auto reset = "\u001b[0m";
 
@@ -923,16 +879,16 @@ namespace space {
 
 				auto piece = m_pieces[rank][file];
 				if (unicode_pieces) {
-					ss << "\u001b[30m" << piece_to_unicode(piece);
+					ss << "\u001b[30m" << piece.as_unicode();
 				}
 				else {
-					ss << (piece.pieceType != PieceType::None ? pieceToChar(piece) : ' ');
+					ss << (piece.pieceType != PieceType::None ? piece.as_char() : ' ');
 				}
 				ss << ' ' << reset;
 			}
 			ss << std::endl;
 		}
-		ss << (perspective == Color::White ? "  a b c d e f g h" : "  h g f e d c b a")
+		ss << (perspective == Color::White ? "   a b c d e f g h" : "   h g f e d c b a")
 		   << std::endl;
 
 		return ss.str();

@@ -10,12 +10,19 @@
 namespace space {
 	enum class Color { White, Black };
 	enum class PieceType { Pawn, Rook, Knight, Bishop, Queen, King, None };
-	struct Position {
+
+  int colorToSign(Color);
+	PieceType charToPieceType(char c);
+	char pieceTypeToChar(PieceType p);
+  
+  
+    struct Position {
 		int rank;
 		int file;
 		Position(int v_rank, int v_file) : rank(v_rank), file(v_file) {}
 		Position(std::string san) : Position(san[1] - '1', san[0] - 'a') { }
 	};
+
 	struct Move {
 		int sourceRank;
 		int sourceFile;
@@ -26,21 +33,31 @@ namespace space {
 		Move(int v_sourceRank, int v_sourceFile, int v_destinationRank, int v_destinationFile, PieceType v_promotedPiece = PieceType::None) :
 			sourceRank(v_sourceRank), sourceFile(v_sourceFile), destinationRank(v_destinationRank), destinationFile(v_destinationFile), promotedPiece(v_promotedPiece)
 		{}
-		inline std::string as_string() const {
+		Move(const std::string &s);
+
+		std::string toString() const;
+		bool operator <(const Move& that) const;
+
+        inline std::string as_string() const {
 			std::stringstream ss;
 			ss << (char)('a' + sourceFile) << (sourceRank + 1)
 			   << " -> "
 			   << (char)('a' + destinationFile) << (destinationRank + 1);
 			return ss.str();
 		}
-		bool operator <(const Move& that) const;
 	};
+  
 	struct Piece {
 		PieceType pieceType;
 		Color color;
-		char as_char() const;
-	};
-	class IBoard {
+		Piece() {}
+		Piece(PieceType _p, Color _c) : pieceType(_p), color(_c) {}
+		Piece(char c);
+		char as_char(bool color = true) const;
+		std::string as_unicode() const;
+  };
+
+  class IBoard {
 	public:
 		using Ptr = std::shared_ptr<IBoard>;
 		using MoveMap = std::map<Move, Ptr>;
@@ -67,5 +84,7 @@ namespace space {
 				Color perspective = Color::White
 		) const = 0;
 	};
+
+	std::string moveToString(Move m, IBoard::Ptr board);
 
 }

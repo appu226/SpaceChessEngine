@@ -6,6 +6,8 @@
 #include <chess/board_impl.h>
 
 #include <chess/algo_factory.h>
+#include <algo_linear/algoLinear.h>
+
 #include "CliAlgo.h"
 
 namespace {
@@ -94,25 +96,27 @@ namespace {
 
 int main(int argc, char const * const * const argv) {
 	auto board = space::BoardImpl::getStartingBoard();
-
 	nlohmann::json config = parseConfig(argc, argv);
-	auto whiteAlgo = 
-		config.contains(WhiteAlgoFieldName) 
-		? space::AlgoFactory::tryCreateAlgo(config[WhiteAlgoFieldName]).value()
-		: space::CliAlgo::create(std::cin, std::cout);
-	auto blackAlgo = 
-		config.contains(BlackAlgoFieldName)
-		? space::AlgoFactory::tryCreateAlgo(config[BlackAlgoFieldName]).value()
-		: space::CliAlgo::create(std::cin, std::cout);
-	auto terminal_colors = config.contains(TerminalColorsFieldName);
-	auto unicode = config.contains(UnicodeFieldName);
+
+	std::vector<double> wts = { 1, 9, 7, 7, 15 };
+
+	auto whiteAlgo = std::make_shared<space::AlgoLinearDepthTwoExt>(space::AlgoLinearDepthTwoExt(6, wts));
+
+	auto blackAlgo = space::CliAlgo::create(std::cin, std::cout);
+	auto terminal_colors = true; // config.contains(TerminalColorsFieldName);
+	auto unicode = false; //  config.contains(UnicodeFieldName);
 
 	bool recursiveError = false;
+	int moveCounter = 0;
+
 	while (true)
-	{
+	{   
+		std::cout 
+			<< "#" << moveCounter 
+			<<  "  " << getColorName(board->whoPlaysNext()) << " to play"
+			<< std::endl;
 		std::cout << board->as_string(terminal_colors, unicode, space::Color::White);
 		auto algo = board->whoPlaysNext() == space::Color::White ? whiteAlgo : blackAlgo;
-
 		try {
 
 			if (board->isCheckMate()) {
@@ -135,7 +139,12 @@ int main(int argc, char const * const * const argv) {
 			auto validMoveIt = validMoves.find(nextMove);
 			if (validMoveIt == validMoves.cend())
 				throw std::runtime_error(getColorName(board->whoPlaysNext()) + " played invalid move.");
+			std::cout 
+				<< "Move: "
+				<< space::moveToString(nextMove, board) 
+				<< std::endl;
 			board = validMoveIt->second;
+			++moveCounter;
 		}
 		catch (const std::bad_alloc&)
 		{
