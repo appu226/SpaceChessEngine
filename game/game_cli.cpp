@@ -7,6 +7,7 @@
 
 #include <chess/algo_factory.h>
 #include <algo_linear/algoLinear.h>
+#include <algo_linear/algo_dumbo.h>
 
 #include "CliAlgo.h"
 
@@ -43,8 +44,11 @@ namespace {
 		}
 	}
 
-	nlohmann::json parseConfig(int argc, char const* const* const argv)
+	nlohmann::json parseConfig(int argc, char const* const* const argv, space::AlgoFactory& algoFactory)
 	{
+		algoFactory.registerAlgoType<space::CliAlgo>();
+		algoFactory.registerAlgoType<space::AlgoLinearDepthTwoExt>();
+		algoFactory.registerAlgoType<space::AlgoDumbo>();
 		nlohmann::json result;
 		for (int iarg = 1; iarg < argc; ++iarg)
 		{
@@ -60,13 +64,13 @@ namespace {
 			{
 				if (++iarg >= argc)
 					throw std::runtime_error("invalid command line arguments: expected filename after '--blackAlgo'");
-				result[BlackAlgoFieldName] = argv[iarg];
+				result[BlackAlgoFieldName][space::AlgoFactory::AlgoNameField] = argv[iarg];
 			}
 			else if (arg == "--whiteAlgo")
 			{
 				if (++iarg >= argc)
 					throw std::runtime_error("invalid command line arguments: expected filename after '--whiteAlgo'");
-				result[WhiteAlgoFieldName] = argv[iarg];
+				result[WhiteAlgoFieldName][space::AlgoFactory::AlgoNameField] = argv[iarg];
 			}
 			else if (arg == "--color")
 			{
@@ -79,12 +83,19 @@ namespace {
 			else if (arg == "--help" || arg == "-h")
 			{
 				std::cout << "Space chess command line game engine.\n\t"
-					<< argv[0] << " [--configFile <json config file>] [--blackAlgo <blackAlgoName>] [--whiteAlgo <whiteAlgoName>] [--help|-h]"
+					<< argv[0] << " [--configFile <json config file>]" 
+					<< "\n\t\t[--blackAlgo <blackAlgoName>] [--whiteAlgo <whiteAlgoName>]"
+					<< "\n\t\t[--color] [--unicode]"
+					<< "\n\t\t[--help|-h]"
 					<< std::endl;
 				std::exit(0);
 			}
 
 		}
+		if (!result.contains(BlackAlgoFieldName))
+			result[BlackAlgoFieldName][space::AlgoFactory::AlgoNameField] = space::CliAlgo::algoName;
+		if (!result.contains(WhiteAlgoFieldName))
+			result[WhiteAlgoFieldName][space::AlgoFactory::AlgoNameField] = space::AlgoLinearDepthTwoExt::algoName;
 		return result;
 	}
 
@@ -96,15 +107,13 @@ namespace {
 
 int main(int argc, char const * const * const argv) {
 	auto board = space::BoardImpl::getStartingBoard();
-	nlohmann::json config = parseConfig(argc, argv);
+	space::AlgoFactory algoFactory;
+	nlohmann::json config = parseConfig(argc, argv, algoFactory);
+	auto blackAlgo = algoFactory.tryCreateAlgo(config[BlackAlgoFieldName]).value();
+	auto whiteAlgo = algoFactory.tryCreateAlgo(config[WhiteAlgoFieldName]).value();
 
-	std::vector<double> wts = { 1, 9, 7, 7, 15 };
-
-	auto whiteAlgo = std::make_shared<space::AlgoLinearDepthTwoExt>(space::AlgoLinearDepthTwoExt(6, wts));
-
-	auto blackAlgo = space::CliAlgo::create(std::cin, std::cout);
-	auto terminal_colors = true; // config.contains(TerminalColorsFieldName);
-	auto unicode = false; //  config.contains(UnicodeFieldName);
+	auto terminal_colors = config.contains(TerminalColorsFieldName);
+	auto unicode = config.contains(UnicodeFieldName);
 
 	bool recursiveError = false;
 	int moveCounter = 0;

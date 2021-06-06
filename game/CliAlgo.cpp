@@ -85,7 +85,7 @@ namespace {
 
 	std::istream& initializeInputStream(const nlohmann::json& config, std::ifstream& fin)
 	{
-		std::string inputFile = config.value(space::CliAlgo::getInputFileField(), "stdin");
+		std::string inputFile = config.value(space::CliAlgo::inputFileField, "stdin");
 		if (inputFile == "stdin")
 			return std::cin;
 		else
@@ -97,7 +97,7 @@ namespace {
 
 	std::ostream& initializeOutputStream(const nlohmann::json& config, std::ofstream& fout)
 	{
-		std::string outputFile = config.value(space::CliAlgo::getOutputFileField(), "stdout");
+		std::string outputFile = config.value(space::CliAlgo::outputFileField, "stdout");
 		if (outputFile == "stdout")
 			return std::cout;
 		else
@@ -124,7 +124,6 @@ namespace space{
 		m_inputStream(initializeInputStream(config, m_fileInput)),
 		m_outputStream(initializeOutputStream(config, m_fileOutput))
 	{
-		auto inputStream = config["inputStream"];
 	}
 
 	Move CliAlgo::getNextMove(IBoard::Ptr board) {
@@ -155,9 +154,8 @@ namespace space{
 		return result;
 	}
 
-	std::string CliAlgo::getAlgoName() { return "CliAlgo"; }
-	std::string CliAlgo::getInputFileField() { return "InputFile"; }
-	std::string CliAlgo::getOutputFileField() { return "OutputFile"; }
-	bool CliAlgo::s_algoMachineRegistration = AlgoFactory::registerAlgoMachine(CliAlgo::getAlgoName(), CliAlgo::createFromConfig);
+	const std::string CliAlgo::algoName = "CliAlgo";
+	const std::string CliAlgo::inputFileField = "InputFile";
+	const std::string CliAlgo::outputFileField = "OutputFile";
 
 }

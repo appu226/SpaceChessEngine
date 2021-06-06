@@ -18,13 +18,13 @@ namespace space {
 			return std::make_shared<CliAlgo>(inputStream, outputStream);
 		}
 
-		static IAlgo::Ptr createFromConfig(const nlohmann::json& config) {
+		static IAlgo::Ptr createFromJson(const nlohmann::json& config) {
 			return std::make_shared<CliAlgo>(config);
 		}
 
-		static std::string getAlgoName();
-		static std::string getInputFileField();
-		static std::string getOutputFileField();
+		static const std::string algoName;
+		static const std::string inputFileField;
+		static const std::string outputFileField;
 
 	private:
 		std::ifstream m_fileInput;
@@ -32,6 +32,5 @@ namespace space {
 		std::istream& m_inputStream;
 		std::ostream& m_outputStream;
 
-		static bool s_algoMachineRegistration;
 	};
 }
