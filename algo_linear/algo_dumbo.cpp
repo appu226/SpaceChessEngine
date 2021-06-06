@@ -23,7 +23,15 @@ namespace space {
 
 	space::AlgoDumboConfig::AlgoDumboConfig(const nlohmann::json& config)
 	{
-		throw std::runtime_error("AlgoDumboConfig::AlgoDumboConfig(nlohmann::json) not yet implemented");
+		maxDepth = config.value(AlgoDumbo::MaxDepthFieldName, 5);
+		maxNumStates = config.value(AlgoDumbo::MaxNumStatesFieldName, 1000 * 1000.0);
+		maxScore = config.value(AlgoDumbo::MaxScoreFieldName, 10 * 1000.0);
+		pawnScore = config.value(AlgoDumbo::PawnScoreFieldName, 1.0);
+		rookScore = config.value(AlgoDumbo::RookScoreFieldName, 5.0);
+		knightScore = config.value(AlgoDumbo::KnightScoreFieldName, 3.0);
+		bishopScore = config.value(AlgoDumbo::BishopScoreFieldName, 3.0);
+		queenScore = config.value(AlgoDumbo::QueenScoreFieldName, 8.0);
+		validMoveScore = config.value(AlgoDumbo::ValidMoveScoreFieldName, 1.0);
 	}
 
 
@@ -73,12 +81,19 @@ namespace space {
 
 	}
 
-	AlgoDumbo::AlgoDumbo() {
-		throw std::runtime_error("AlgoDumbo::AlgoDumbo not yet implemented");
-	}
-
-	AlgoDumbo::AlgoDumbo(const nlohmann::json& config) {
-		throw std::runtime_error("AlgoDumbo::AlgoDumbo(json) not yet implemented");
+	const std::string AlgoDumbo::algoName = "AlgoDumbo";
+	const std::string AlgoDumbo::MaxDepthFieldName = "MaxDepth";
+	const std::string AlgoDumbo::MaxNumStatesFieldName = "MaxNumStates";
+	const std::string AlgoDumbo::MaxScoreFieldName = "MaxScore";
+	const std::string AlgoDumbo::PawnScoreFieldName = "PawnScore";
+	const std::string AlgoDumbo::RookScoreFieldName = "RookScore";
+	const std::string AlgoDumbo::KnightScoreFieldName = "KnightScore";
+	const std::string AlgoDumbo::BishopScoreFieldName = "BishopScore";
+	const std::string AlgoDumbo::QueenScoreFieldName = "QueenScore";
+	const std::string AlgoDumbo::ValidMoveScoreFieldName = "ValidMoveScore";
+	IAlgo::Ptr AlgoDumbo::createFromJson(const nlohmann::json& config)
+	{
+		return std::make_shared<AlgoDumbo>(AlgoDumboConfig(config));
 	}
 
 

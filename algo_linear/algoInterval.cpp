@@ -61,6 +61,12 @@ namespace space {
 		this->fold(node);
 	}
 
+	const std::string AlgoInterval::algoName = "AlgoInterval";
+	IAlgo::Ptr AlgoInterval::createFromJson(const nlohmann::json& config)
+	{
+		throw std::runtime_error("AlgoInterval::createFromJson not yet implemented");
+	}
+
 }
 
 

@@ -118,6 +118,7 @@ namespace space {
 				}
 			}
 		}
+		throw std::runtime_error("Could not find King position");
 	}
 
 
@@ -685,6 +686,8 @@ namespace space {
 		case PieceType::King:
 			return	abs(m.destinationFile - m.sourceFile) <= 1 &&
 				abs(m.destinationRank - m.sourceRank) <= 1;			
+		default:
+			throw std::runtime_error("Unsupported piece type");
 		}
 
 	}

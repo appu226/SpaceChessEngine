@@ -297,7 +297,6 @@ TEST(BoardSuite, PGNParseTest) {
 	f.close();
 
 	for (auto& game : games) {
-		std::cout << "Validating: " << game.metadata["Site"] << std::endl;
 		test_utils::validate_game_moves(game);
 	}
 }

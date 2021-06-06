@@ -5,6 +5,8 @@
 #include <chess/fen.h>
 #include <common/base.h>
 
+#include <nlohmann/json.hpp>
+
 #include "feature.h"
 
 
@@ -105,6 +107,9 @@ namespace space {
 		static constexpr Score scoreMax = 1e8; 
 		
 		Score getLinearScore(IBoard::Ptr board);
+
+		static const std::string algoName;
+		static IAlgo::Ptr createFromJson(const nlohmann::json& config);
 
 
 	protected:

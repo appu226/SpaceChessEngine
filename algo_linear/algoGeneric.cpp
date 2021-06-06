@@ -133,6 +133,12 @@ namespace space {
 		return whiteScore - blackScore;
 	}
 
+	const std::string AlgoGeneric::algoName = "AlgoGeneric";
+	IAlgo::Ptr AlgoGeneric::createFromJson(const nlohmann::json& config)
+	{
+		throw std::runtime_error("AlgoGeneric::createFromJson not yet implemented");
+	}
+
 	void AlgoGeneric::expand()
 	{
 		this->expand(this->root);

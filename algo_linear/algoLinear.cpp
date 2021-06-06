@@ -51,6 +51,12 @@ namespace space {
 
 	}
 
+	const std::string AlgoLinearDepthOne::algoName = "AlgoLinearDepthOne";
+	IAlgo::Ptr AlgoLinearDepthOne::createFromJson(const nlohmann::json& config)
+	{
+		throw std::runtime_error("AlgoLinearDepthOne::createFromJson not yet implemented");
+	}
+
 	AlgoLinearDepthOne::Score AlgoLinearDepthOne::getScore(IBoard::Ptr board)
 	{
 		auto signum = [](Color c) { return c == Color::White ? 1 : -1; };
@@ -71,7 +77,7 @@ namespace space {
 // Depth Two algos
 
 
-	AlgoLinearDepthTwoExt::AlgoLinearDepthTwoExt(std::size_t _breadth, const std::vector<double> wtsVec)
+	AlgoLinearDepthTwoExt::AlgoLinearDepthTwoExt(std::size_t _breadth, const std::vector<double>& wtsVec)
 	{
 		space_assert(_breadth > 0, "Breadth must be positive");
 		space_assert(wtsVec.size() == 5, "Need 5 weights");
@@ -174,6 +180,26 @@ namespace space {
 
 		return bestMove;
 
+	}
+
+	const std::string AlgoLinearDepthTwoExt::algoName = "AlgoLinearDepthTwoExt";
+	const std::string AlgoLinearDepthTwoExt::PawnWeightFieldName = "PawnWeight";
+	const std::string AlgoLinearDepthTwoExt::RookWeightFieldName = "RookWeight";
+	const std::string AlgoLinearDepthTwoExt::KnightWeightFieldName = "KnightWeight";
+	const std::string AlgoLinearDepthTwoExt::BishopWeightFieldName = "BishopWeight";
+	const std::string AlgoLinearDepthTwoExt::QueenWeightFieldName = "QueenWeight";
+	const std::string AlgoLinearDepthTwoExt::BreadthFieldName = "Breadth";
+	IAlgo::Ptr AlgoLinearDepthTwoExt::createFromJson(const nlohmann::json& config)
+	{
+		double pawnWt = config.value(PawnWeightFieldName, 1.0);
+		double rookWt = config.value(RookWeightFieldName, 9.0);
+		double knightWt = config.value(KnightWeightFieldName, 7.0);
+		double bishopWt = config.value(BishopWeightFieldName, 7.0);
+		double queenWt = config.value(QueenWeightFieldName, 15.0);
+		int breadth = config.value(BreadthFieldName, 6);
+
+		std::vector<double> wts = { pawnWt, rookWt, knightWt, bishopWt, queenWt };
+		return std::make_shared<AlgoLinearDepthTwoExt>(breadth, wts);
 	}
 
 }

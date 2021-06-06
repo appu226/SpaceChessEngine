@@ -7,7 +7,7 @@
 
 #include "feature.h"
 
-
+#include <nlohmann/json.hpp>
 
 namespace space {
 
@@ -53,6 +53,9 @@ namespace space {
 		void expandLeafNode(NodeInterval::Ptr node); // expand leaf node one level to all possible subsequent moves
 		void refresh(); // pruning & folding alternately from bottom-up
 		void refreshNode(NodeInterval::Ptr node); // for a single node
+
+		static const std::string algoName;
+		static IAlgo::Ptr createFromJson(const nlohmann::json& config);
 
 
 	protected:

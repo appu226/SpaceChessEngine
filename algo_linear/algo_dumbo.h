@@ -26,8 +26,19 @@ namespace space {
 			using Ptr = std::shared_ptr<AlgoDumbo>;
 			Move getNextMove(IBoard::Ptr board) override;
 
-			AlgoDumbo();
-			AlgoDumbo(const nlohmann::json& config);
+			AlgoDumbo(const AlgoDumboConfig& config): m_config(config) {}
+
+			static const std::string algoName;
+			static const std::string MaxDepthFieldName;
+			static const std::string MaxNumStatesFieldName;
+			static const std::string MaxScoreFieldName;
+			static const std::string PawnScoreFieldName;
+			static const std::string RookScoreFieldName;
+			static const std::string KnightScoreFieldName;
+			static const std::string BishopScoreFieldName;
+			static const std::string QueenScoreFieldName;
+			static const std::string ValidMoveScoreFieldName;
+			static IAlgo::Ptr createFromJson(const nlohmann::json& config);
 
 		private:
 			AlgoDumboConfig m_config;
